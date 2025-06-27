@@ -5,5 +5,5 @@ export const authenticateJWT = expressjwt({
   secret: config.jwtSecret,
   algorithms: ['HS256'],
 }).unless({
-  path: ['/api/login', '/api/register'],
+  path: ['/api/users/login', '/api/users/register'],
 });
