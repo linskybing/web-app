@@ -2,6 +2,23 @@ import * as UserService from '../services/user.service';
 import { Request, Response } from 'express';
 
 export const UserController = {
+  async getUsers(req: Request, res: Response) {
+    try {
+      const users = await UserService.getAllUsers();
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+  async getUser(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      const target = await UserService.getTargetUser(id);
+      res.json(target);
+    } catch (err) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
   async register(req: Request, res: Response) {
     try {
       const { username, password } = req.body;
@@ -35,11 +52,14 @@ export const UserController = {
   async changeUserPassword(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
-      const { newPassword } = req.body;
+      const { oldPassword, newPassword } = req.body;
       if (!newPassword) {
         res.status(400).json({ error: 'Missing newPassword' });
       }
-      await UserService.updateUserPassword(id, newPassword);
+      if (!oldPassword) {
+        res.status(400).json({ error: 'Missing oldPassword' });
+      }
+      await UserService.updateUserPassword(id, oldPassword, newPassword);
       res.status(200).json({ message: 'Password updated' });
     } catch (err: any) {
       res.status(400).json({ error: err.message });

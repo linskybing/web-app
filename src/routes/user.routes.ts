@@ -2,11 +2,16 @@ import express from 'express';
 import { UserController } from '../controllers/user.controller';
 
 const router = express.Router();
+const multer = require('multer');
+const upload = multer();
 
-router.post('/register', UserController.register);
-router.post('/login', UserController.login);
-router.patch('/:id', UserController.update);
-router.patch('/:id/password', UserController.changeUserPassword);
-router.delete('/:id', UserController.deleteUser);
+// User table
+router.get('/users', UserController.getUsers);
+router.get('/users/:id', UserController.getUser);
+router.post('/users/register', upload.none(), UserController.register);
+router.post('/users/login', upload.none(), UserController.login);
+router.patch('/users/:id', upload.none(), UserController.update);
+router.patch('/users/:id/password', upload.none(), UserController.changeUserPassword);
+router.delete('/users/:id', UserController.deleteUser);
 
 export default router;

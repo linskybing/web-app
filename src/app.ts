@@ -6,6 +6,8 @@ const app = express();
 
 app.use(express.json());
 app.use(authenticateJWT);
-app.use('/api/users', userRoutes);
-
+app.use('/api', userRoutes);
+app.listen(config.port, () => {
+    console.log('Server is running on http://localhost:3000');
+});
 export default app;

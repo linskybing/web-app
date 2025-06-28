@@ -3,6 +3,21 @@ import * as userModel from '../models/user.model';
 import { config } from '../config/config';
 import jwt from 'jsonwebtoken';
 
+export async function getAllUsers() {
+  const users = await userModel.getAllUsers();
+
+  return users.map(({ password, ...user }) => user);
+}
+
+export async function getTargetUser(id: number) {
+  const user = await userModel.findUserById(id);
+  if (user) {
+    const { password, ...val } = user;
+    return val;
+  }
+  return null;
+}
+
 export async function registerUser(data: userModel.User): Promise<number> {
   const existingUser = await userModel.findUserByUsername(data.username);
   
@@ -68,12 +83,15 @@ export async function deleteUser(id: number): Promise<boolean> {
   return true;
 }
 
-export async function updateUserPassword(id: number, newPassword: string): Promise<boolean> {
+export async function updateUserPassword(id: number, oldPassword: string, newPassword: string): Promise<boolean> {
   const user = await userModel.findUserById(id);
   if (!user) {
     throw new Error('User not found');
   }
-
+  const valid = await bcrypt.compare(oldPassword, user.password);
+  if (!valid) {
+    throw new Error('Invalid OldPassword');
+  }
   const password = await bcrypt.hash(newPassword, 10);
   const success = await userModel.updatePassword(id, password);
   if (!success) {

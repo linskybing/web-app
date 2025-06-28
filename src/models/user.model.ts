@@ -11,6 +11,11 @@ export interface User {
     updated_at?: Date;
 }
 
+export async function getAllUsers(): Promise<User[]> {
+  const [rows] = await db.query('SELECT * FROM users');
+  return rows as User[];
+}
+
 export async function createUser(user: User): Promise<number> {
   const [result] = await db.execute(
     `INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)`,
