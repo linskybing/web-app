@@ -18,6 +18,8 @@
     "dotenv": "^16.6.0",
     "express": "^5.1.0",
     "express-jwt": "^8.5.1",
+    "handlebars": "^4.7.8",
+    "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "ldapjs": "^3.0.7",
     "multer": "^2.0.1",
