@@ -1,10 +1,13 @@
-import 'express';
+import { JwtPayload } from 'jsonwebtoken';
 
-declare module 'express' {
-  interface Request {
-    auth?: {
-      username: string;
-      [key: string]: any;
-    };
+declare global {
+  namespace Express {
+    interface Request {
+      auth?: JwtPayload & {
+        id: number;
+        username: string;
+        role: string;
+      };
+    }
   }
 }
