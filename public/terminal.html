@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>K8s Terminal</title>
+  <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+  <style>
+    body, html { margin: 0; height: 100%; }
+    #terminal { height: 100%; width: 100%; background: black; }
+    #status {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      background: #222;
+      color: #eee;
+      padding: 4px 8px;
+      font-family: monospace;
+      font-size: 14px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+
+  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+  <script>
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUxMjQyOTg0LCJleHAiOjE3NTEzMjkzODR9.uNWZ0WtkzuM9ksjk0glVlCQJrzh9EOkOAWBS-IUMjCY';
+    const pod = 'ros2-discovery-server';
+    const container = 'discovery-server';
+
+    const term = new Terminal({
+      cursorBlink: true,
+      scrollback: 1000,
+    });
+    term.open(document.getElementById('terminal'));
+
+
+    const socket = new WebSocket(`ws://localhost:3000/ws/terminal?token=${token}&pod=${pod}&container=${container}`);
+
+    socket.binaryType = 'arraybuffer';
+
+    socket.onopen = () => {
+      term.focus();
+    };
+
+    socket.onerror = (err) => {
+      console.error('WebSocket error:', err);
+    };
+
+    socket.onclose = (event) => {
+      console.log('WebSocket closed', event);
+    };
+
+    socket.onmessage = (event) => {
+      let data = event.data;
+      console.log('Received from WS:', data);
+      if (data instanceof ArrayBuffer) {
+        data = new Uint8Array(data);
+      }
+      term.write(data);
+    };
+
+    term.onData(data => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(data);
+      }
+    });
+  </script>
+</body>
+</html>

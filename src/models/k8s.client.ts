@@ -4,7 +4,26 @@ import yaml from 'js-yaml';
 import path from 'path';
 import handlebars from 'handlebars';
 import * as stream from 'stream'
-import { error } from 'console';
+
+export interface ExecInteractiveParams  {
+  namespace: string;
+  podName: string;
+  containerName: string;
+  command: string[];
+  onStdout: (chunk: Buffer) => void;
+  onStderr: (chunk: Buffer) => void;
+  onClose?: (status: k8s.V1Status) => void;
+  stdinStream: stream.Readable;
+  tty?: boolean;
+}
+
+export interface ExecCommandParams {
+  namespace: string;
+  podName: string;
+  containerName: string;
+  command: string[];
+  tty?: boolean;
+}
 
 export class k8sClient {
     private kc: k8s.KubeConfig;
@@ -362,13 +381,7 @@ export class k8sClient {
         return res.status.podIP;
     }
 
-    async execCommand(params: {
-        namespace: string;
-        podName: string;
-        containerName: string;
-        command: string[];
-        tty?: boolean;
-    }): Promise<{ stdout: string; stderr: string }> {
+    async execCommand(params: ExecCommandParams): Promise<{ stdout: string; stderr: string }> {
         const { namespace, podName, containerName, command, tty = false } = params;
 
         let stdout = '';
@@ -413,6 +426,47 @@ export class k8sClient {
             });
         });
     }
+
+    async execInteractive(params: ExecInteractiveParams) {
+        const {
+            namespace,
+            podName,
+            containerName,
+            command,
+            onStdout,
+            onStderr,
+            onClose,
+            stdinStream,
+            tty = true,
+        } = params;
+
+        const stdoutStream = new stream.Writable({
+            write(chunk, encoding, callback) {
+            onStdout(Buffer.from(chunk));
+            callback();
+            },
+        });
+
+        const stderrStream = new stream.Writable({
+            write(chunk, encoding, callback) {
+            onStderr(Buffer.from(chunk));
+            callback();
+            },
+        });
+
+        return this.exec.exec(
+            namespace,
+            podName,
+            containerName,
+            command,
+            stdoutStream,
+            stderrStream,
+            stdinStream,
+            tty,
+            onClose ?? (() => {}),
+        );
+    }
+
 }
 
 export const k8sclient = new k8sClient();
