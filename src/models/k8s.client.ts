@@ -3,9 +3,12 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import handlebars from 'handlebars';
+import * as stream from 'stream'
+import { error } from 'console';
 
 export class k8sClient {
     private kc: k8s.KubeConfig;
+    private exec: k8s.Exec;
     private coreV1Api: k8s.CoreV1Api;
     private appsV1Api: k8s.AppsV1Api;
 
@@ -16,6 +19,7 @@ export class k8sClient {
         } catch {
             this.kc.loadFromDefault();
         }
+        this.exec = new k8s.Exec(this.kc);
         this.coreV1Api = this.kc.makeApiClient(k8s.CoreV1Api);
         this.appsV1Api = this.kc.makeApiClient(k8s.AppsV1Api);
     }
@@ -356,6 +360,58 @@ export class k8sClient {
             throw new Error(`Pod '${name}' in namespace '${namespace}' has no IP (pod may not be running)`);
         }
         return res.status.podIP;
+    }
+
+    async execCommand(params: {
+        namespace: string;
+        podName: string;
+        containerName: string;
+        command: string[];
+        tty?: boolean;
+    }): Promise<{ stdout: string; stderr: string }> {
+        const { namespace, podName, containerName, command, tty = false } = params;
+
+        let stdout = '';
+        let stderr = '';
+
+        const stdoutStream = new stream.Writable({
+        write(chunk, encoding, callback) {
+            stdout += chunk.toString();
+            callback();
+        },
+        });
+
+        const stderrStream = new stream.Writable({
+        write(chunk, encoding, callback) {
+            stderr += chunk.toString();
+            callback();
+        },
+        });
+
+        return new Promise((resolve, reject) => {
+        this.exec.exec(
+            namespace,
+            podName,
+            containerName,
+            command,
+            stdoutStream,
+            stderrStream,
+            null, // stdin
+            tty,
+            (status: k8s.V1Status) => {
+                if (status.status === 'Success') {
+                    resolve({ stdout, stderr });
+                } else {
+                    const msg = status.message || status.reason || JSON.stringify(status);
+                    const error = new Error(`Command failed: ${msg}`);
+                    Object.assign(error, { stdout, stderr, status });
+                    reject(error);
+                }
+            }
+            ).catch((err) => {
+                reject(new Error(`WebSocket connection failed: ${err.message}`))
+            });
+        });
     }
 }
 

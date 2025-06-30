@@ -56,7 +56,7 @@ export async function loginUser(username: string, password: string): Promise<str
       role: user.role,
     },
     config.jwtSecret,
-    { expiresIn: '1h' }
+    { expiresIn: '24h' }
   );
 
   return token;

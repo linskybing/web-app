@@ -35,9 +35,15 @@ router.post('/k8s/pvc/:name', VolumnController.createPVC);
 router.delete('/k8s/pvc/:name', VolumnController.deletePVC);
 
 // ros2
-router.post('/ros2/discovery', Ros2Controller.createDiscovery);
+router.post('/ros2/discovery', upload.none(), Ros2Controller.createDiscovery);
 router.delete('/ros2/discovery', Ros2Controller.deleteDiscovery);
-router.post('/ros2/slamunity', Ros2Controller.createSlamUnity);
+router.post('/ros2/slamunity', upload.none(), Ros2Controller.createSlamUnity);
 router.delete('/ros2/slamunity', Ros2Controller.deleteSlamUnity);
-
+router.post('/ros2/localization', upload.none(), Ros2Controller.createLocalization);
+router.delete('/ros2/localization', Ros2Controller.deleteLocalization);
+router.post('/ros2/store', Ros2Controller.storeMap);
+router.post('/ros2/car', upload.none(), Ros2Controller.createCarControl);
+router.delete('/ros2/car', Ros2Controller.deleteCarControl);
+router.post('/ros2/yolo', upload.none(), Ros2Controller.createYolo);
+router.delete('/ros2/yolo', Ros2Controller.deleteYolo);
 export default router;

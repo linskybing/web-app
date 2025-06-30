@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ros2-slam-unity
+  name: "ros2-localization-unity"
   labels:
     user: {{username}}
     app: pros_app
@@ -11,7 +11,7 @@ spec:
       image: "{{registry}}/screamlab/pros_jetson_driver_image:0.1.0"
       envFrom:
         - configMapRef:
-            name: slam-unity-env-config
+            name: localization-unity-env-config
       volumeMounts:
         - name: demo-volume
           mountPath: /workspace
@@ -27,7 +27,7 @@ spec:
       image: "{{registry}}/screamlab/pros_unity_lidar_trans_image:latest"
       envFrom:
         - configMapRef:
-            name: slam-unity-env-config
+            name: localization-unity-env-config
       command: ["/bin/bash", "-c"]
       args:
         - |
@@ -35,12 +35,12 @@ spec:
           source /workspaces/install/setup.bash && \
           ros2 run unity_lidar_transformer lidar_transformer_node
 
-    # # -------------------- slam service --------------------
-    - name: slam
+    # # -------------------- localization service --------------------
+    - name: localization
       image: "{{registry}}/screamlab/pros_jetson_driver_image:0.1.0"
       envFrom:
         - configMapRef:
-            name: slam-unity-env-config
+            name: localization-unity-env-config
       volumeMounts:
         - name: demo-volume
           mountPath: /workspace
@@ -49,14 +49,14 @@ spec:
         - |
           source /opt/ros/humble/setup.bash && \
           source /workspaces/install/setup.bash && \
-          ros2 launch /workspace/pros_app/docker/compose/demo/slam.xml
+          ros2 launch /workspace/pros_app/docker/compose/demo/localization_unity.xml
 
     # -------------------- rosbridge service --------------------
     - name: rosbridge
       image: "{{registry}}/screamlab/pros_jetson_driver_image:0.1.0"
       envFrom:
         - configMapRef:
-            name: slam-unity-env-config
+            name: localization-unity-env-config
       ports:
         - containerPort: 9090
       command: ["/bin/bash", "-c"]
@@ -65,6 +65,23 @@ spec:
           source /opt/ros/humble/setup.bash && \
           source /workspaces/install/setup.bash && \
           ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+
+    # -------------------- navigation service --------------------
+    - name: navigation
+      image: "{{registry}}/screamlab/pros_jetson_driver_image:0.1.0"
+      envFrom:
+        - configMapRef:
+            name: localization-unity-env-config
+      volumeMounts:
+        - name: demo-volume
+          mountPath: /workspace
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          source /opt/ros/humble/setup.bash && \
+          source /workspaces/install/setup.bash && \
+          ros2 launch /workspace/pros_app/docker/compose/demo/navigation_unity.xml
+  
   # -------------------- Shared volume definition --------------------
   volumes:
     - name: demo-volume
@@ -75,7 +92,7 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: slam-unity-env-config
+  name: localization-unity-env-config
 data:
   ROS_DOMAIN_ID: "1"
   ROS_DISCOVERY_SERVER: "ros2-discovery-server:11811"

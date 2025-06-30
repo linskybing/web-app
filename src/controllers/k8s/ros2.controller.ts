@@ -5,7 +5,10 @@ import { register } from 'module';
 export const Ros2Controller = {
     async createDiscovery(req: Request, res: Response) {
         try {
-            await k8sclient.applyYamls('ros2-discovery-server.yaml', req.auth?.username ?? '');
+            const values = {
+                username: req.auth?.username ?? 'default',
+            };
+            await k8sclient.applyTemplateYaml('ros2-discovery-server.yaml', req.auth?.username ?? 'default', values);
             res.json({ message: 'suceess' });
         } catch (err: any) {
             res.status(500).json({ error: err.message});
@@ -13,7 +16,7 @@ export const Ros2Controller = {
     },
     async deleteDiscovery(req: Request, res: Response) {
         try {
-            await k8sclient.deleteYamls('ros2-discovery-server.yaml', req.auth?.username ?? '');
+            await k8sclient.deleteYamls('ros2-discovery-server.yaml', req.auth?.username ?? 'default');
             res.json({ message: 'suceess' });
         } catch (err: any) {
             res.status(500).json({ error: err.message});
@@ -22,14 +25,13 @@ export const Ros2Controller = {
     async createSlamUnity(req: Request, res: Response) {
         try {
             // [TODO]
-            const serverip = await k8sclient.getPodIP(req.auth?.username ?? '', 'ros2-discovery-server');
+            const { pvcname } = req.body;
             const values = {
-                username: req.auth?.username ?? '',
+                username: req.auth?.username ?? 'default',
                 registry: 'ghcr.io',
-                pvcname:  'pvc-test',
-                discoveryip: `${serverip}`
+                pvcname
             };
-            await k8sclient.applyTemplateYaml('ros2-slam-unity.yaml', req.auth?.username ?? '', values);
+            await k8sclient.applyTemplateYaml('ros2-slam-unity.yaml', req.auth?.username ?? 'default', values);
             res.json({ message: 'suceess' });
         } catch (err: any) {
             res.status(500).json({ error: err.message});
@@ -37,7 +39,97 @@ export const Ros2Controller = {
     },
     async deleteSlamUnity(req: Request, res: Response) {
         try {
-            await k8sclient.deleteYamls('ros2-slam-unity.yaml', req.auth?.username ?? '');
+            await k8sclient.deleteYamls('ros2-slam-unity.yaml', req.auth?.username ?? 'default');
+            res.json({ message: 'suceess' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    async createLocalization(req: Request, res: Response) {
+        try {
+            // [TODO]
+            const { pvcname } = req.body;
+            const values = {
+                username: req.auth?.username ?? '',
+                registry: 'ghcr.io',
+                pvcname,
+            };
+            await k8sclient.applyTemplateYaml('ros2-localization-unity.yaml', req.auth?.username ?? 'default', values);
+            res.json({ message: 'suceess' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    async deleteLocalization(req: Request, res: Response) {
+        try {
+            await k8sclient.deleteYamls('ros2-localization-unity.yaml', req.auth?.username ?? 'default');
+            res.json({ message: 'suceess' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    async storeMap(req: Request, res:Response) {
+        try {
+            const command = [
+                '/bin/bash',
+                '-c',
+                'source /opt/ros/humble/setup.bash && source /workspaces/install/setup.bash && ros2 run nav2_map_server map_saver_cli -f /workspace/pros_app/docker/compose/demo/map/map01/map01',
+            ];
+            const params = {
+                namespace: req.auth?.username ?? 'default',
+                podName: 'ros2-slam-unity',
+                containerName: 'slam',
+                command
+            }
+            const result = await k8sclient.execCommand(params);
+            console.log(result);
+            res.json({ message: result?.stdout ?? 'Map saved, but no output.' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    async createCarControl(req: Request, res: Response) {
+        try {
+            // [TODO]
+            const { pvcname } = req.body;
+            const values = {
+                username: req.auth?.username ?? '',
+                registry: 'ghcr.io',
+                pvcname,
+            };
+            await k8sclient.applyTemplateYaml('ros2-pros-car.yaml', req.auth?.username ?? 'default', values);
+            res.json({ message: 'suceess' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    async deleteCarControl(req: Request, res: Response) {
+        try {
+            await k8sclient.deleteYamls('ros2-pros-car.yaml', req.auth?.username ?? 'default');
+            res.json({ message: 'suceess' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    //registry.screamtrumpet.csie.ncku.edu.tw
+    async createYolo(req: Request, res: Response) {
+        try {
+            // [TODO]
+            const { pvcname } = req.body;
+            const values = {
+                username: req.auth?.username ?? '',
+                registry: 'registry.screamtrumpet.csie.ncku.edu.tw',
+                pvcname
+            };
+            await k8sclient.applyTemplateYaml('ros2-yolo.yaml', req.auth?.username ?? 'default', values);
+            res.json({ message: 'suceess' });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message});
+        }
+    },
+    async deleteYolo(req: Request, res: Response) {
+        try {
+            await k8sclient.deleteYamls('ros2-yolo.yaml', req.auth?.username ?? 'default');
             res.json({ message: 'suceess' });
         } catch (err: any) {
             res.status(500).json({ error: err.message});
