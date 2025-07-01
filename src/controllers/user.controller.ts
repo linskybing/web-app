@@ -34,8 +34,8 @@ export const UserController = {
   async login(req: Request, res: Response) {
     try {
       const { username, password } = req.body;
-      const token = await UserService.loginUser(username, password);
-      res.status(200).json({ token });
+      const data = await UserService.loginUser(username, password);
+      res.status(200).json(data);
     } catch (err: any) {
       res.status(401).json({ error: err.message });
     }

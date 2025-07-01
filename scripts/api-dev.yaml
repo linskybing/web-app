@@ -20,6 +20,7 @@ spec:
       labels:
         app: myapi
     spec:
+      nodeName: k8s-work1
       serviceAccountName: admin-sa
       containers:
       - name: myapi
@@ -59,7 +60,7 @@ spec:
       volumes:
       - name: code
         hostPath:
-          path: /run/desktop/mnt/host/c/Users/linsk/Desktop/web-app
+          path: /home/sky/web-app
           type: Directory
 ---
 apiVersion: v1

@@ -30,16 +30,19 @@ spec:
     spec:
       containers:
         - name: notebook
-          image: jupyter/base-notebook:latest
+          image: jupyter-yolo:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8888
           env:
             - name: JUPYTER_TOKEN
               value: "{{token}}"
+          resources:
+            limits:
+              nvidia.com/gpu.shared: 1
           volumeMounts:
             - name: workdir
-              mountPath: /home/{{username}}/work
+              mountPath: /root/work
       volumes:
         - name: workdir
           persistentVolumeClaim:

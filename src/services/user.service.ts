@@ -37,7 +37,7 @@ export async function registerUser(data: userModel.User): Promise<number> {
   return userId;
 }
 
-export async function loginUser(username: string, password: string): Promise<string> {
+export async function loginUser(username: string, password: string) {
   const user = await userModel.findUserByUsername(username);
 
   if (!user) {
@@ -59,7 +59,7 @@ export async function loginUser(username: string, password: string): Promise<str
     { expiresIn: '24h' }
   );
 
-  return token;
+  return { token, id: user.id };
 }
 
 export async function updateUser(
