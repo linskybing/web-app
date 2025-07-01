@@ -16,11 +16,12 @@ export const JupyterController = {
 
             const user = await findUserByUsername(username);
             if (user && user.id) {
-                await createNotebookForUser(user.id, `http://localhost:8888/?token=${token}`);
+                await createNotebookForUser(user.id, `http://10.121.124.21:8888/?token=${token}`);
             } else {
                 console.error(`User ${username} not found`);
             }
-            res.json({ url: `http://localhost:8888/?token=${token}` });            
+            const url = await k8sclient.getNodePortInfo('jupyter-svc', username);
+            res.json({ url: `${url[0]}/?token=${token}` });            
         } catch (err: any) {
             res.status(500).json({ error: err.message});
         }
@@ -61,3 +62,4 @@ export const JupyterController = {
         }
     }
 };
+

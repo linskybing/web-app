@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: jupyter-svc
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: jupyter
     user: {{username}}
@@ -28,6 +28,8 @@ spec:
         app: jupyter
         user: {{username}}
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: notebook
           image: jupyter-yolo:latest
@@ -42,7 +44,7 @@ spec:
               nvidia.com/gpu.shared: 1
           volumeMounts:
             - name: workdir
-              mountPath: /root/work
+              mountPath: /home/user/work
       volumes:
         - name: workdir
           persistentVolumeClaim:

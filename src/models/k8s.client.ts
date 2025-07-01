@@ -381,6 +381,35 @@ export class k8sClient {
         return res.status.podIP;
     }
 
+    async getNodePortInfo(serviceName: string, namespace: string) {
+        const svc = await this.coreV1Api.readNamespacedService({ name: serviceName, namespace });
+
+        if (svc.spec?.type !== 'NodePort') {
+            throw new Error(`Service ${serviceName} is not a NodePort service.`);
+        }
+
+        const port = svc.spec.ports?.[0];
+        if (!port?.nodePort) {
+            throw new Error(`No nodePort found in service ${serviceName}.`);
+        }
+
+        const nodePort = port.nodePort;
+
+        const nodeResp = await this.coreV1Api.listNode();
+        const nodeIPs: string[] = [];
+
+        for (const node of nodeResp.items) {
+            const addresses = node.status?.addresses || [];
+            for (const addr of addresses) {
+            if (addr.type === 'InternalIP') {
+                nodeIPs.push(addr.address);
+            }
+            }
+        }
+
+        return nodeIPs.map(ip => `http://${ip}:${nodePort}`);
+    }
+
     async execCommand(params: ExecCommandParams): Promise<{ stdout: string; stderr: string }> {
         const { namespace, podName, containerName, command, tty = false } = params;
 
