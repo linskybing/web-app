@@ -4,6 +4,7 @@ import { requireAdmin } from '../middlewares/auth.middleware';
 import { NamespaceController } from '../controllers/k8s/namespace.controller';
 import { VolumnController } from '../controllers/k8s/volumn.controller';
 import { Ros2Controller } from '../controllers/k8s/ros2.controller';
+import { JupyterController } from '../controllers/k8s/jupyter.controller';
 const router = express.Router();
 const multer = require('multer');
 const upload = multer();
@@ -46,4 +47,10 @@ router.post('/ros2/car', upload.none(), Ros2Controller.createCarControl);
 router.delete('/ros2/car', Ros2Controller.deleteCarControl);
 router.post('/ros2/yolo', upload.none(), Ros2Controller.createYolo);
 router.delete('/ros2/yolo', Ros2Controller.deleteYolo);
+
+// jupyter
+router.get('/notebook', JupyterController.getAllNotebooks);
+router.get('/notebook/:userid', JupyterController.getUserNotebooks);
+router.post('/notebook', upload.none(), JupyterController.createNoteBook);
+router.delete('/notebook', JupyterController.deleteNoteBook);
 export default router;

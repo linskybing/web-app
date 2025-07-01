@@ -23,8 +23,8 @@ export const UserController = {
     try {
       const { username, password } = req.body;
       const id = await UserService.registerUser( {
-        username: username,
-        password: password
+        username,
+        password
       });
       res.status(201).json({ id: id, username: username});
     } catch (err: any) {
