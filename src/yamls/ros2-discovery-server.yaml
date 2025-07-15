@@ -7,8 +7,8 @@ metadata:
 spec:
   containers:
   - name: discovery-server
-    image: ubuntu-fastdds:v3.2.2
-    imagePullPolicy: Never
+    image: "{{registry}}/library/ubuntu-fastdds:v3.2.2"
+    imagePullPolicy: Always
     command: ["/bin/bash", "-c"]
     args: ["source /usr/local/eprosima/setup.bash && fastdds discovery -i 0 -p 11811"]
     ports:

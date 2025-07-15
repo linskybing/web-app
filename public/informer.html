@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>K8s Informer WebSocket Test</title>
+  <style>
+    body { font-family: monospace; margin: 20px; }
+    #log { white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; background: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+<h2>K8s Informer WebSocket Test</h2>
+<label>
+  Token: <input id="tokenInput" type="text" size="60" placeholder="請輸入 JWT Token" />
+</label>
+<button id="connectBtn">Connect</button>
+<button id="disconnectBtn" disabled>Disconnect</button>
+
+<div id="log"></div>
+
+<script>
+  let ws;
+  const logEl = document.getElementById('log');
+  const tokenInput = document.getElementById('tokenInput');
+  const connectBtn = document.getElementById('connectBtn');
+  const disconnectBtn = document.getElementById('disconnectBtn');
+
+  function log(msg) {
+    const now = new Date().toLocaleTimeString();
+    logEl.textContent += `[${now}] ${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  connectBtn.addEventListener('click', () => {
+    const token = tokenInput.value.trim();
+    if (!token) {
+      alert('請先輸入 JWT Token');
+      return;
+    }
+
+    const wsUrl = `ws://10.121.124.22:30000/ws/informer?token=${encodeURIComponent(token)}`;
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      log('WebSocket connected');
+      connectBtn.disabled = true;
+      disconnectBtn.disabled = false;
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        log(`Received: ${JSON.stringify(data, null, 2)}`);
+      } catch(e) {
+        log('Received (non-JSON): ' + event.data);
+      }
+    };
+
+    ws.onerror = (err) => {
+      log('WebSocket error: ' + err.message);
+    };
+
+    ws.onclose = (ev) => {
+      log(`WebSocket closed (code: ${ev.code}, reason: ${ev.reason})`);
+      connectBtn.disabled = false;
+      disconnectBtn.disabled = true;
+    };
+  });
+
+  disconnectBtn.addEventListener('click', () => {
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+  });
+</script>
+
+</body>
+</html>

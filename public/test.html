@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>K8s Informer Test</title>
+</head>
+<body>
+  <h3>Informer WebSocket Test</h3>
+  <pre id="log"></pre>
+
+  <script>
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTMsInVzZXJuYW1lIjoidGVzdCIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUyNTYwNDIyLCJleHAiOjE3NTI2NDY4MjJ9.wohV3GRtCwzCgW7Cv7FdeOkwo9dBWkTzMxQ1ch4CDYQ';
+
+    const ws = new WebSocket(`ws://10.121.124.22:30000/ws/informer?token=${token}`);
+
+    const log = document.getElementById('log');
+    function appendLog(msg) {
+      log.textContent += msg + "\n";
+    }
+
+    ws.onopen = () => {
+      appendLog('Connected to informer WebSocket');
+    };
+
+    ws.onerror = (err) => {
+      appendLog('WebSocket error: ' + err.message);
+      console.error(err);
+    };
+
+    ws.onclose = (evt) => {
+      appendLog(`WebSocket closed: code=${evt.code} reason=${evt.reason}`);
+    };
+
+    ws.onmessage = (evt) => {
+      appendLog('Received: ' + evt.data);
+      console.log('Received:', evt.data);
+    };
+  </script>
+</body>
+</html>

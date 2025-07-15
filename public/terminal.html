@@ -14,7 +14,7 @@
 
   <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
   <script>
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUxMzI5NjE0LCJleHAiOjE3NTE0MTYwMTR9.7XcwdC3KIWZEAEUICOnshRfEgCVehaANrsoeHDWKSCA';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUyNTYxOTUyLCJleHAiOjE3NTI2NDgzNTJ9.NBR8M-iI32h2ETBSgONCfecqJiP2YJePVArG-NFoxwg';
     const pod = 'ros2-discovery-server';
     const container = 'discovery-server';
 
@@ -25,7 +25,7 @@
     term.open(document.getElementById('terminal'));
 
 
-    const socket = new WebSocket(`ws://localhost:3000/ws/terminal?token=${token}&pod=${pod}&container=${container}`);
+    const socket = new WebSocket(`ws://10.121.124.22:30000/ws/terminal?token=${token}&pod=${pod}&container=${container}`);
 
     socket.binaryType = 'arraybuffer';
 

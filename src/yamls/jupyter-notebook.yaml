@@ -28,6 +28,7 @@ spec:
         app: jupyter
         user: {{username}}
     spec:
+      nodename: k8s-work1
       securityContext:
         fsGroup: 1000
       containers:

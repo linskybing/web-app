@@ -3,9 +3,9 @@ FROM jupyter/base-notebook
 USER root
 
 RUN apt-get update && apt-get install -y \
-    git sudo libglib2.0-0 libgl1-mesa-glx && \
+    git unzip sudo libglib2.0-0 libgl1-mesa-glx && \
     rm -rf /var/lib/apt/lists/*
-
+    
 RUN userdel -r jovyan || true && rm -rf /home/jovyan
 
 RUN useradd -m -s /bin/bash user && \

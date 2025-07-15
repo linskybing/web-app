@@ -5,6 +5,13 @@ import path from 'path';
 import handlebars from 'handlebars';
 import * as stream from 'stream'
 
+export interface WatchCallbackGeneric {
+  onAdded?: (obj: any) => void;
+  onModified?: (obj: any) => void;
+  onDeleted?: (obj: any) => void;
+  onError?: (err: any) => void;
+}
+
 export interface ExecInteractiveParams  {
   namespace: string;
   podName: string;
@@ -30,6 +37,7 @@ export class k8sClient {
     private exec: k8s.Exec;
     private coreV1Api: k8s.CoreV1Api;
     private appsV1Api: k8s.AppsV1Api;
+    private watch: k8s.Watch;
 
     constructor() {
         this.kc = new k8s.KubeConfig();
@@ -41,6 +49,7 @@ export class k8sClient {
         this.exec = new k8s.Exec(this.kc);
         this.coreV1Api = this.kc.makeApiClient(k8s.CoreV1Api);
         this.appsV1Api = this.kc.makeApiClient(k8s.AppsV1Api);
+        this.watch = new k8s.Watch(this.kc);
     }
 
     async listPods(namespace?: string): Promise<k8s.V1Pod[]> {
@@ -124,7 +133,7 @@ export class k8sClient {
             metadata: { name: volumnName },
             spec : {
                 capacity: { storage: '20Gi' },
-                accessModes: ['ReadWriteOnce'],
+                accessModes: ['ReadWriteMany'],
                 persistentVolumeReclaimPolicy: 'Retain',
                 storageClassName: 'hostpath',
                  hostPath: {
@@ -198,7 +207,7 @@ export class k8sClient {
             metadata: { name: claimName },
             spec: {
                 accessModes: ['ReadWriteOnce'],
-                storageClassName: 'hostpath',
+                storageClassName: 'local-path',
                 resources: { requests: { storage: '5Gi' } },
             },
         };
@@ -374,13 +383,20 @@ export class k8sClient {
     }
 
     async getPodIP(namespace: string, name: string): Promise<string> {
-        const res = await this.coreV1Api.readNamespacedPod({ name, namespace});
+        const res = await this.coreV1Api.readNamespacedPod({ name, namespace });
         if (!res.status?.podIP) {
             throw new Error(`Pod '${name}' in namespace '${namespace}' has no IP (pod may not be running)`);
         }
         return res.status.podIP;
     }
 
+    async checkPodExist(namespace: string, name: string): Promise<boolean> {
+        const res = await this.coreV1Api.readNamespacedPod({ name, namespace });
+        if (!res.status?.podIP) {
+            return false;
+        }
+        return true;
+    }
     async getNodePortInfo(serviceName: string, namespace: string) {
         const svc = await this.coreV1Api.readNamespacedService({ name: serviceName, namespace });
 
@@ -495,7 +511,29 @@ export class k8sClient {
             onClose ?? (() => {}),
         );
     }
-
-}
+    async watchResource(path: string, callbacks: WatchCallbackGeneric): Promise<AbortController> {
+        const watcher = await this.watch.watch(
+        path,
+        {},
+        (phase, obj) => {
+            switch (phase) {
+            case 'ADDED':
+                callbacks.onAdded?.(obj);
+                break;
+            case 'MODIFIED':
+                callbacks.onModified?.(obj);
+                break;
+            case 'DELETED':
+                callbacks.onDeleted?.(obj);
+                break;
+            }
+        },
+        (err) => {
+            callbacks.onError?.(err);
+        }
+        );
+        return watcher;
+    }
+    }
 
 export const k8sclient = new k8sClient();

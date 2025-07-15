@@ -50,7 +50,7 @@ export const JupyterController = {
         }
     },
     async getUserNotebooks(req: Request, res: Response) {
-        const userId = parseInt(req.params.uesrid, 10);
+        const userId = parseInt(req.params.userid, 10);
         if (isNaN(userId)) res.status(400).json({ error: 'Invalid user ID' });
         else {
             try {

@@ -39,6 +39,7 @@ router.delete('/k8s/pvc/:name', VolumnController.deletePVC);
 router.post('/ros2/discovery', upload.none(), Ros2Controller.createDiscovery);
 router.delete('/ros2/discovery', Ros2Controller.deleteDiscovery);
 router.post('/ros2/slamunity', upload.none(), Ros2Controller.createSlamUnity);
+router.post('/ros2/slamunityall', upload.none(), Ros2Controller.createSlamUnityAndDep);
 router.delete('/ros2/slamunity', Ros2Controller.deleteSlamUnity);
 router.post('/ros2/localization', upload.none(), Ros2Controller.createLocalization);
 router.delete('/ros2/localization', Ros2Controller.deleteLocalization);
