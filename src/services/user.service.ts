@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import * as userModel from '../models/user.model';
 import { config } from '../config/config';
 import jwt from 'jsonwebtoken';
+import { k8sclient } from '../models/k8s.client';
 
 export async function getAllUsers() {
   const users = await userModel.getAllUsers();
@@ -33,6 +34,9 @@ export async function registerUser(data: userModel.User): Promise<number> {
     full_name: data.full_name ?? '',
     role: data.role ?? 'user',
   });
+
+  await k8sclient.createNamespace(data.username);
+  await k8sclient.createNamespacedPVC('home', data.username);
 
   return userId;
 }
@@ -80,6 +84,12 @@ export async function deleteUser(id: number): Promise<boolean> {
 
   const success = await userModel.deleteUser(id);
   if (!success) throw new Error('Delete failed');
+
+  const response = await k8sclient.deleteNamespace(user.username);
+  if (response.status !== 'Success') {
+    throw new Error(`Failed to delete namespace: ${response.message || 'unknown error'}`);
+  }
+    
   return true;
 }
 

@@ -14,9 +14,9 @@
 
   <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
   <script>
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUyNTYxOTUyLCJleHAiOjE3NTI2NDgzNTJ9.NBR8M-iI32h2ETBSgONCfecqJiP2YJePVArG-NFoxwg';
-    const pod = 'ros2-discovery-server';
-    const container = 'discovery-server';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0MSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUyNTk5OTI0LCJleHAiOjE3NTI2ODYzMjR9.BzVt_ZdKeIZIV1pFJ230gYZlUwcKno9axgKPFWlmqkU';
+    const pod = 'ros2-pros-car';
+    const container = 'pros-car';
 
     const term = new Terminal({
       cursorBlink: true,
@@ -30,6 +30,7 @@
     socket.binaryType = 'arraybuffer';
 
     socket.onopen = () => {
+      socket.send(JSON.stringify({ type: 'resize', cols: 100, rows: 100 }));
       term.focus();
     };
 
@@ -55,6 +56,10 @@
         socket.send(data);
       }
     });
+    term.onResize(({ cols, rows }) => {
+      socket.send(JSON.stringify({ type: 'resize', cols, rows }));
+    });
+
   </script>
 </body>
 </html>

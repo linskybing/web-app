@@ -17,14 +17,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `jupyter_notebooks` (
+CREATE TABLE IF NOT EXISTS `service_tokens` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
-  `url` VARCHAR(255),
+  `token` VARCHAR(255) NOT NULL,
+  `type` ENUM('jupyter', 'code-server', 'other') NOT NULL DEFAULT 'other',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_jupyter_user`
+  CONSTRAINT `fk_service_user`
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE

@@ -28,7 +28,7 @@ export const UserController = {
       });
       res.status(201).json({ id: id, username: username});
     } catch (err: any) {
-      res.status(400).json({ error: err.message});
+      res.status(400).json({ error: err.message });
     }
   },
   async login(req: Request, res: Response) {

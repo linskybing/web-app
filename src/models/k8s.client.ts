@@ -3,8 +3,8 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import handlebars from 'handlebars';
-import * as stream from 'stream'
-
+import * as stream from 'stream';
+import WebSocket from 'ws';
 export interface WatchCallbackGeneric {
   onAdded?: (obj: any) => void;
   onModified?: (obj: any) => void;
@@ -38,7 +38,7 @@ export class k8sClient {
     private coreV1Api: k8s.CoreV1Api;
     private appsV1Api: k8s.AppsV1Api;
     private watch: k8s.Watch;
-
+    private activeWsMap: Map<string, WebSocket.WebSocket> = new Map();
     constructor() {
         this.kc = new k8s.KubeConfig();
         try {
@@ -206,9 +206,9 @@ export class k8sClient {
         const pvc: k8s.V1PersistentVolumeClaim = {
             metadata: { name: claimName },
             spec: {
-                accessModes: ['ReadWriteOnce'],
-                storageClassName: 'local-path',
-                resources: { requests: { storage: '5Gi' } },
+                accessModes: ['ReadWriteMany'],
+                storageClassName: 'nfs-sc',
+                resources: { requests: { storage: '15Gi' } },
             },
         };
 
@@ -471,7 +471,9 @@ export class k8sClient {
             });
         });
     }
-
+    private makeSessionKey(namespace: string, pod: string, container: string) {
+        return `${namespace}::${pod}::${container}`;
+    }
     async execInteractive(params: ExecInteractiveParams) {
         const {
             namespace,
@@ -484,22 +486,24 @@ export class k8sClient {
             stdinStream,
             tty = true,
         } = params;
-
+        stdinStream.resume();
         const stdoutStream = new stream.Writable({
-            write(chunk, encoding, callback) {
+        write(chunk, encoding, callback) {
+            // process.stdout.write(chunk);
             onStdout(Buffer.from(chunk));
             callback();
-            },
+        },
         });
 
         const stderrStream = new stream.Writable({
             write(chunk, encoding, callback) {
-            onStderr(Buffer.from(chunk));
-            callback();
+                // process.stderr.write(chunk);
+                onStderr(Buffer.from(chunk));
+                callback();
             },
         });
 
-        return this.exec.exec(
+        const ws = await this.exec.exec(
             namespace,
             podName,
             containerName,
@@ -508,8 +512,35 @@ export class k8sClient {
             stderrStream,
             stdinStream,
             tty,
-            onClose ?? (() => {}),
+            (status) => {
+                onClose?.(status);
+                this.activeWsMap.delete(this.makeSessionKey(namespace, podName, containerName));
+            }
         );
+        this.activeWsMap.set(this.makeSessionKey(namespace, podName, containerName), ws);
+        // this.resizeTerminal({ namespace, podName, containerName, cols: 32, rows: 32});
+    }
+    async resizeTerminal(params: {
+                    namespace: string;
+                    podName: string;
+                    containerName: string;
+                    cols: number;
+                    rows: number;
+                }) {
+        const { namespace, podName, containerName, cols, rows } = params;
+        const key = this.makeSessionKey(namespace, podName, containerName);
+        const ws = this.activeWsMap.get(key);
+        if (!ws) {
+            console.warn(`No active WebSocket for terminal session: ${key}`);
+            return;
+        }
+        if (ws.readyState !== ws.OPEN) {
+            console.warn('k8s exec WebSocket not OPEN');
+        }
+        console.log(`resize cols ${cols} rows ${rows}`);
+        const resizePayload = JSON.stringify({ Width: cols, Height: rows });
+        const payload = Buffer.concat([Buffer.from([4]), Buffer.from(resizePayload, 'utf-8')]);
+        ws.send(payload);
     }
     async watchResource(path: string, callbacks: WatchCallbackGeneric): Promise<AbortController> {
         const watcher = await this.watch.watch(

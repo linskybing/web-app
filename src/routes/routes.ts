@@ -3,11 +3,16 @@ import { UserController } from '../controllers/user.controller';
 import { requireAdmin } from '../middlewares/auth.middleware';
 import { NamespaceController } from '../controllers/k8s/namespace.controller';
 import { VolumnController } from '../controllers/k8s/volumn.controller';
-import { Ros2Controller } from '../controllers/k8s/ros2.controller';
-import { JupyterController } from '../controllers/k8s/jupyter.controller';
+import { Ros2Controller } from '../controllers/ros2.controller';
+import { JupyterController } from '../controllers/jupyter.controller';
+import { CodeController } from '../controllers/code.controller';
+import { ValidateController } from '../controllers/validate.controller';
 const router = express.Router();
 const multer = require('multer');
 const upload = multer();
+
+// validate
+router.get('/validate', ValidateController.AuthValidator);
 
 // User table
 router.get('/users', UserController.getUsers);
@@ -54,4 +59,11 @@ router.get('/notebook', JupyterController.getAllNotebooks);
 router.get('/notebook/:userid', JupyterController.getUserNotebooks);
 router.post('/notebook', upload.none(), JupyterController.createNoteBook);
 router.delete('/notebook', JupyterController.deleteNoteBook);
+
+// codeserver
+router.get('/codeserver', CodeController.getAllCodeServer);
+router.get('/codeserver/:userid', CodeController.getUserCodeServer);
+router.post('/codeserver', upload.none(), CodeController.createCodeServer);
+router.delete('/codeserver', CodeController.deleteCodeServer);
+
 export default router;

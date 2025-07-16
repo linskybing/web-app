@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 
 // For CORS
-const allowedOrigins = ['http://10.121.124.22:5173'];
+const allowedOrigins = ['http://10.121.124.22:5173','http://api.core.local', 'http://app.core.local'];
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {

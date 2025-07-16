@@ -5,7 +5,7 @@ export const authenticateJWT = expressjwt({
   secret: config.jwtSecret,
   algorithms: ['HS256'],
 }).unless({
-  path: ['/api/users/login', '/api/users/register'],
+  path: ['/api/users/login', '/api/users/register', '/api/validate'],
 });
 
 export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {

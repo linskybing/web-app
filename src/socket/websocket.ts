@@ -51,15 +51,27 @@ function filterResource(resourceName: string, obj: any) {
           ? status.conditions.map((c: any) => ({ type: c.type, status: c.status }))
           : undefined,
       };
-    case 'service':
+    case 'service':{
+      const externalIP =
+        status?.loadBalancer?.ingress?.[0]?.ip ||
+        status?.loadBalancer?.ingress?.[0]?.hostname ||
+        (Array.isArray(spec.externalIPs) ? spec.externalIPs[0] : null) ||
+        null;
+
       return {
         ...base,
         type: spec.type || null,
         clusterIP: spec.clusterIP || null,
+        externalIP,
         ports: Array.isArray(spec.ports)
-          ? spec.ports.map((p: any) => ({ port: p.port, protocol: p.protocol }))
+          ? spec.ports.map((p: any) => ({
+              port: p.port,
+              protocol: p.protocol,
+              nodePort: p.nodePort ?? null,
+            }))
           : [],
       };
+    }
     default:
       return {
         ...base,
@@ -86,11 +98,27 @@ async function setupTerminal(ws: WebSocket, req: IncomingMessage) {
         const stdinStream = new stream.PassThrough();
 
         ws.on('message', (data) => {
-            if (typeof data === 'string') {
-                stdinStream.write(Buffer.from(data));
-            } else if (data instanceof Buffer) {
-                stdinStream.write(data);
+          try {
+            const msg = JSON.parse(data.toString());
+            if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
+              k8sclient.resizeTerminal({
+                namespace,
+                podName,
+                containerName,
+                cols: msg.cols,
+                rows: msg.rows,
+              });
+              return;
             }
+          } catch (_) {
+            // not JSON, treat as input
+          }
+
+          if (typeof data === 'string') {
+            stdinStream.write(Buffer.from(data));
+          } else if (data instanceof Buffer) {
+            stdinStream.write(data);
+          }
         });
 
         ws.on('close', () => {

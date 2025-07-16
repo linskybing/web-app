@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-server
+  labels:
+    app: code-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: code-server
+  template:
+    metadata:
+      labels:
+        app: code-server
+    spec:
+      containers:
+      - name: code-server
+        image: "{{registry}}/docker-hub/codercom/code-server:latest"
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PASSWORD
+          value: "{{token}}"
+        volumeMounts:
+          - name: workdir
+            mountPath: /home/coder
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: {{pvcname}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-server
+spec:
+  type: NodePort
+  selector:
+    app: code-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

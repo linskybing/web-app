@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { k8sclient } from '../../models/k8s.client';
-import { registryConfig } from '../../config/config';
+import { k8sclient } from '../models/k8s.client';
+import { registryConfig } from '../config/config';
 
 export const Ros2Controller = {
     async createDiscovery(req: Request, res: Response) {
